@@ -5,26 +5,26 @@
 
 char handle_greeting_request(int client_fd)
 {
-    unsigned char buffer[1024];
+    char buffer[256];
 
-    ssize_t n = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    ssize_t n = recv(client_fd, buffer, sizeof(buffer), 0);
 
     std::cout << "received " << n << " bytes" << std::endl;
 
-    unsigned char ver = buffer[0];
+    char ver = buffer[0];
     std::cout << "ver: " << static_cast<int>(ver) << std::endl;
 
-    unsigned char nauth = buffer[1];
+    char nauth = buffer[1];
     std::cout << "nauth: " << static_cast<int>(nauth) << std::endl;
 
     for (int i = 0; i < nauth; i++)
     {
-        unsigned char auth = buffer[2 + i];
+        char auth = buffer[2 + i];
         std::cout << "auth: " << static_cast<int>(auth) << std::endl;
 
         if (auth == 2)
         {
-            unsigned char response[2] = {ver, 0x02};
+            char response[2] = {ver, 0x02};
             ssize_t n = send(client_fd, response, sizeof(response), 0);
 
             if (n == -1)
@@ -38,10 +38,45 @@ char handle_greeting_request(int client_fd)
         }
     }
 
-    unsigned char response[2] = {ver, 0xff};
+    unsigned response[2] = {static_cast<unsigned char>(ver), 0xff};
     send(client_fd, response, sizeof(response), 0);
 
     return -1;
+}
+
+char handle_authentication_username_password_request(int client_fd)
+{
+    char buffer[512];
+
+    ssize_t n = recv(client_fd, buffer, sizeof(buffer), 0);
+
+    std::cout << "received " << n << " bytes" << std::endl;
+
+    char ver = buffer[0];
+    std::cout << "ver: " << static_cast<int>(ver) << std::endl;
+
+    char id_len = buffer[1];
+    std::cout << "id_len: " << static_cast<int>(id_len) << std::endl;
+
+    std::string id(
+        &buffer[2],
+        id_len);
+
+    std::cout << "id: " << id << std::endl;
+
+    char pw_len = buffer[2 + id_len];
+    std::cout << "pw_len: " << static_cast<int>(pw_len) << std::endl;
+
+    std::string pw(
+        &buffer[3 + id_len],
+        pw_len);
+
+    std::cout << "pw: " << pw << std::endl;
+
+    unsigned char response[2] = {static_cast<unsigned char>(ver), 0x00};
+    send(client_fd, response, sizeof(response), 0);
+
+    return 0;
 }
 
 int main()
@@ -100,6 +135,8 @@ int main()
 
         return -1;
     }
+
+    char result = handle_authentication_username_password_request(client_fd);
 
     // const char *message = "Hello from C++ TCP server!\n";
     // send(client_fd, message, strlen(message), 0);
