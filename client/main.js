@@ -7,11 +7,13 @@ const uri = "socks5://username:password@127.0.0.1:8080";
 
 const socksProxyAgent = new SocksProxyAgent(uri);
 
-const res = await axios.get("https://api.ipify.org?format=json", {
-  httpAgent: socksProxyAgent,
-  httpsAgent: socksProxyAgent,
-  proxy: false,
-  timeout: 15000,
-});
+try {
+  const res = await axios.get("https://api.ipify.org?format=json", {
+    httpAgent: socksProxyAgent,
+    httpsAgent: socksProxyAgent,
+    proxy: false,
+    timeout: 15000,
+  });
 
-console.log(res.data);
+  console.log(res.data);
+} catch {}
